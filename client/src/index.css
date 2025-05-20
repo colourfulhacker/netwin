@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 267 100% 61%;
+  --primary-foreground: 211 100% 99%;
+  --secondary: 328 100% 61%;
+  --secondary-foreground: 210 20% 98%;
+  --accent: 165 100% 61%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 240 4.9% 83.9%;
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-inter antialiased bg-background text-foreground;
+  }
+}
+
+body {
+  background-color: #121212;
+  color: #F8F8F8;
+  font-family: 'Inter', sans-serif;
+}
+
+.font-rajdhani {
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.font-poppins {
+  font-family: 'Poppins', sans-serif;
+}
+
+.gradient-border {
+  position: relative;
+  border-radius: 0.5rem;
+  z-index: 0;
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #6C3AFF, #FF3A8C, #3AFFDC);
+  z-index: -1;
+  border-radius: 0.6rem;
+  animation: border-animation 3s ease alternate infinite;
+}
+
+@keyframes border-animation {
+  0% {
+    filter: blur(3px);
+  }
+  100% {
+    filter: blur(5px);
+  }
+}
+
+.tournament-card {
+  transition: all 0.3s ease;
+}
+
+.tournament-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(108, 58, 255, 0.4);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #1E1E2F;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #6C3AFF;
+  border-radius: 5px;
+}
+
+/* Mobile Nav Active Indicator */
+.nav-indicator {
+  position: absolute;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, #6C3AFF, #FF3A8C);
+  bottom: 0;
+  left: 0;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.nav-active .nav-indicator {
+  opacity: 1;
+}
+
+/* Dark theme colors for components */
+.bg-dark {
+  background-color: #121212;
+}
+
+.bg-dark-card {
+  background-color: #1E1E2F;
+}
+
+.bg-dark-lighter {
+  background-color: #282840;
+}
+
+/* Gradient button styling */
+.btn-gradient {
+  background: linear-gradient(to right, #6C3AFF, #FF3A8C);
+}
