@@ -6,8 +6,8 @@ interface ThemeContextType {
 }
 
 export const ThemeContext = createContext<ThemeContextType>({
-  theme: "dark",
-  setTheme: () => {}
+  theme: "light",
+  setTheme: () => {},
 });
 
 interface ThemeProviderProps {
@@ -15,32 +15,31 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   
   useEffect(() => {
     // Check if theme is stored in localStorage
-    const storedTheme = localStorage.getItem("netwin_theme") as "light" | "dark" | null;
+    const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
     
     if (storedTheme) {
       setTheme(storedTheme);
     } else {
-      // Default to dark theme for gaming experience
-      setTheme("dark");
-      localStorage.setItem("netwin_theme", "dark");
+      // Check user's preferred color scheme
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setTheme(prefersDark ? "dark" : "light");
     }
   }, []);
   
   useEffect(() => {
-    // Apply theme class to document element
-    const root = document.documentElement;
+    // Apply theme to document
     if (theme === "dark") {
-      root.classList.add("dark");
+      document.documentElement.classList.add("dark");
     } else {
-      root.classList.remove("dark");
+      document.documentElement.classList.remove("dark");
     }
     
     // Store theme preference
-    localStorage.setItem("netwin_theme", theme);
+    localStorage.setItem("theme", theme);
   }, [theme]);
   
   const updateTheme = (newTheme: "light" | "dark") => {

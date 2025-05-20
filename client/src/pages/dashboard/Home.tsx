@@ -1,303 +1,377 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useTournaments } from "@/hooks/useTournaments";
-import { useMatches } from "@/hooks/useMatches";
-import { Button } from "@/components/ui/button";
+import { useNotifications } from "@/hooks/useNotifications";
+import { formatCurrency } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { formatCurrency, formatTimeRemaining, getTimeRemainingInSeconds } from "@/lib/utils";
-import { Trophy, Calendar, Users, ArrowRight, MapPin, Sword, Gamepad2 } from "lucide-react";
+import {
+  Calendar,
+  Trophy,
+  Users,
+  Clock,
+  Target,
+  ChevronRight,
+  ArrowUpRight,
+  Bell,
+  Wallet,
+  UserCheck,
+  ShieldAlert,
+  Medal,
+  Gamepad,
+} from "lucide-react";
 
 export default function Home() {
   const { user } = useAuth();
   const { tournaments } = useTournaments();
-  const { getUserMatches } = useMatches();
-  const [remainingSeconds, setRemainingSeconds] = useState<number[]>([]);
+  const { notifications, markAsRead } = useNotifications();
+  const [activeTab, setActiveTab] = useState<string>("upcoming");
   
-  // Get upcoming tournaments (max 3)
-  const upcomingTournaments = tournaments
-    ?.filter(tournament => tournament.status === "upcoming")
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 3) || [];
-    
-  // Get user's upcoming matches
-  const userMatches = user ? getUserMatches(user.id) : [];
-  const upcomingMatches = userMatches
-    .filter(match => match.status === "upcoming" || match.status === "live")
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 2);
-  
-  // Update countdown timers every second
-  useEffect(() => {
-    if (!upcomingTournaments.length) return;
-    
-    const updateTimers = () => {
-      const seconds = upcomingTournaments.map(tournament => 
-        getTimeRemainingInSeconds(new Date(tournament.date))
-      );
-      setRemainingSeconds(seconds);
-    };
-    
-    // Initial update
-    updateTimers();
-    
-    // Set interval for updates
-    const intervalId = setInterval(updateTimers, 1000);
-    
-    return () => clearInterval(intervalId);
-  }, [upcomingTournaments]);
-
   if (!user) return null;
+  
+  // Get upcoming tournaments (limit to 3)
+  const upcomingTournaments = tournaments
+    .filter(t => t.status === "upcoming")
+    .slice(0, 3);
+  
+  // Get recent notifications (limit to 3)
+  const recentNotifications = notifications
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 3);
+  
+  // Calculate remaining time for tournament
+  const getRemainingTime = (date: Date): string => {
+    const now = new Date();
+    const tournamentDate = new Date(date);
+    const diffTime = Math.abs(tournamentDate.getTime() - now.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    if (diffDays > 0) {
+      return `${diffDays}d ${diffHours}h`;
+    }
+    return `${diffHours}h`;
+  };
+  
+  // Handle notification click
+  const handleNotificationClick = (id: number) => {
+    markAsRead(user.id, id);
+  };
   
   return (
     <div className="container py-6 md:py-10">
       {/* Welcome Section */}
-      <section className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold font-poppins">
-              Welcome back, <span className="text-primary">{user.username}</span>
-            </h1>
-            <p className="text-gray-400 mt-1">
-              Get ready for your next tournament match
-            </p>
-          </div>
-          <div className="mt-4 md:mt-0">
-            <Button asChild className="bg-gradient-to-r from-primary to-secondary">
-              <Link href="/tournaments">
-                <div className="flex items-center">
-                  <Trophy className="mr-2 h-4 w-4" />
-                  Find Tournaments
-                </div>
-              </Link>
-            </Button>
-          </div>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold font-poppins">
+            Welcome back, {user.username}!
+          </h1>
+          <p className="text-gray-400 mt-1">
+            Your esports tournament platform
+          </p>
         </div>
-      </section>
+        
+        <div className="flex gap-3">
+          <Button asChild variant="outline" className="border-gray-700">
+            <Link href="/wallet">
+              <Wallet className="mr-2 h-4 w-4" />
+              Balance: {formatCurrency(user.walletBalance, user.currency)}
+            </Link>
+          </Button>
+          
+          <Button asChild className="bg-gradient-to-r from-primary to-secondary">
+            <Link href="/tournaments">
+              <Trophy className="mr-2 h-4 w-4" />
+              Join Tournaments
+            </Link>
+          </Button>
+        </div>
+      </div>
       
-      {/* Wallet Balance Card */}
-      <section className="mb-8">
-        <div className="bg-gradient-to-r from-primary/20 to-secondary/20 rounded-xl p-6 border border-primary/30">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <p className="text-gray-400 text-sm mb-1">Wallet Balance</p>
-              <h3 className="text-2xl font-bold font-rajdhani">
-                {formatCurrency(user.walletBalance, user.currency)}
-              </h3>
-              <Button variant="link" asChild className="text-primary p-0 h-auto mt-1">
-                <Link href="/wallet">
-                  <div className="flex items-center text-sm">
-                    Add Money <ArrowRight className="ml-1 h-3 w-3" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* KYC Alert (if not verified) */}
+          {user.kycStatus !== "verified" && (
+            <Card className="bg-dark-card border-gray-800 p-6">
+              <div className="flex items-start">
+                <div className="bg-yellow-900/20 p-3 rounded-full mr-4">
+                  <ShieldAlert className="h-6 w-6 text-yellow-500" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold mb-1">Complete KYC Verification</h2>
+                  <p className="text-gray-400 mb-4">
+                    Verify your identity to unlock all platform features including withdrawals and high-stakes tournaments.
+                  </p>
+                  <Button asChild>
+                    <Link href="/profile/kyc">
+                      <UserCheck className="mr-2 h-4 w-4" />
+                      Verify Now
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+          
+          {/* Tournaments Section */}
+          <Card className="bg-dark-card border-gray-800 overflow-hidden">
+            <div className="p-6 pb-2">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Tournaments</h2>
+                <Button asChild variant="ghost" size="sm" className="text-sm text-gray-400">
+                  <Link href="/tournaments">
+                    View All
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              
+              <Tabs
+                defaultValue="upcoming"
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
+                <TabsList className="mb-4">
+                  <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+                  <TabsTrigger value="ongoing">Live</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="upcoming" className="mt-0">
+                  {upcomingTournaments.length > 0 ? (
+                    <div className="space-y-4">
+                      {upcomingTournaments.map((tournament) => (
+                        <div
+                          key={tournament.id}
+                          className="flex flex-col md:flex-row md:items-center gap-4 p-4 bg-dark-lighter rounded-lg"
+                        >
+                          <div className="flex-shrink-0">
+                            <img
+                              src={tournament.image}
+                              alt={tournament.title}
+                              className="w-full md:w-24 h-24 object-cover rounded-lg"
+                            />
+                          </div>
+                          
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold">{tournament.title}</h3>
+                              <Badge variant="outline" className="border-primary text-primary">
+                                {tournament.gameMode}
+                              </Badge>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-3 mt-2 text-sm">
+                              <div className="flex items-center text-gray-400">
+                                <Calendar className="mr-1 h-3.5 w-3.5" />
+                                {new Date(tournament.date).toLocaleDateString()}
+                              </div>
+                              <div className="flex items-center text-gray-400">
+                                <Clock className="mr-1 h-3.5 w-3.5" />
+                                {getRemainingTime(tournament.date)}
+                              </div>
+                              <div className="flex items-center text-gray-400">
+                                <Users className="mr-1 h-3.5 w-3.5" />
+                                {tournament.mode}
+                              </div>
+                              <div className="flex items-center text-gray-400">
+                                <Target className="mr-1 h-3.5 w-3.5" />
+                                {tournament.map}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between mt-3">
+                              <div>
+                                <div className="text-sm text-gray-400">Entry Fee</div>
+                                <div className="font-medium">
+                                  {formatCurrency(tournament.entryFee, user.currency)}
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <div className="text-sm text-gray-400">Prize Pool</div>
+                                <div className="font-medium text-green-400">
+                                  {formatCurrency(tournament.prizePool, user.currency)}
+                                </div>
+                              </div>
+                              
+                              <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
+                                <Link href={`/tournaments/${tournament.id}`}>
+                                  Join Now
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Clock className="h-10 w-10 text-gray-500 mx-auto mb-2" />
+                      <h3 className="text-lg font-medium">No Upcoming Tournaments</h3>
+                      <p className="text-gray-400 mt-1">
+                        Check back later for new tournaments
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="ongoing" className="mt-0">
+                  <div className="text-center py-8">
+                    <Trophy className="h-10 w-10 text-gray-500 mx-auto mb-2" />
+                    <h3 className="text-lg font-medium">No Live Tournaments</h3>
+                    <p className="text-gray-400 mt-1">
+                      Check back during scheduled tournament times
+                    </p>
                   </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </Card>
+          
+          {/* Recent Matches */}
+          <Card className="bg-dark-card border-gray-800 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Recent Matches</h2>
+              <Button asChild variant="ghost" size="sm" className="text-sm text-gray-400">
+                <Link href="/matches">
+                  View All
+                  <ChevronRight className="ml-1 h-4 w-4" />
                 </Link>
               </Button>
             </div>
             
-            <div className="border-t md:border-t-0 md:border-l border-gray-700 md:pl-6 pt-4 md:pt-0">
-              <p className="text-gray-400 text-sm mb-1">Tournaments Played</p>
-              <h3 className="text-2xl font-bold font-rajdhani">
-                {userMatches.filter(match => match.status === "completed").length}
-              </h3>
-            </div>
-            
-            <div className="border-t md:border-t-0 md:border-l border-gray-700 md:pl-6 pt-4 md:pt-0">
-              <p className="text-gray-400 text-sm mb-1">Winnings</p>
-              <h3 className="text-2xl font-bold font-rajdhani text-green-400">
-                {formatCurrency(
-                  userMatches
-                    .filter(match => match.status === "completed" && match.prize)
-                    .reduce((total, match) => total + (match.prize || 0), 0),
-                  user.currency
-                )}
-              </h3>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Your Matches Section */}
-      <section className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold font-poppins">Your Upcoming Matches</h2>
-          <Button variant="link" asChild className="text-primary">
-            <Link href="/matches">
-              <div className="flex items-center">
-                View All <ArrowRight className="ml-1 h-4 w-4" />
-              </div>
-            </Link>
-          </Button>
-        </div>
-        
-        {upcomingMatches.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {upcomingMatches.map(match => (
-              <Card key={match.id} className="bg-dark-card border-gray-800 p-5">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      {match.status === "live" ? (
-                        <Badge className="bg-red-500">LIVE</Badge>
-                      ) : (
-                        <Badge variant="outline" className="border-warning text-warning">
-                          UPCOMING
-                        </Badge>
-                      )}
-                      <Badge variant="outline" className="border-gray-700">
-                        {match.mode}
-                      </Badge>
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">{match.tournamentTitle}</h3>
-                    <div className="flex flex-wrap gap-3 text-sm text-gray-400">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        {new Date(match.date).toLocaleDateString()}
-                      </div>
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {match.map}
-                      </div>
-                    </div>
-                  </div>
-                  <Button asChild size="sm">
-                    <Link href={`/match/${match.id}`}>
-                      Details
-                    </Link>
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="bg-dark-card border-gray-800 p-8 text-center">
-            <div className="flex flex-col items-center">
-              <Gamepad2 className="h-12 w-12 text-gray-600 mb-3" />
-              <h3 className="text-lg font-medium mb-2">No Upcoming Matches</h3>
-              <p className="text-gray-400 mb-4">
-                Join a tournament to get started
+            <div className="text-center py-8">
+              <Medal className="h-10 w-10 text-gray-500 mx-auto mb-2" />
+              <h3 className="text-lg font-medium">No Recent Matches</h3>
+              <p className="text-gray-400 mt-1">
+                Join a tournament to see your matches here
               </p>
-              <Button asChild>
-                <Link href="/tournaments">Browse Tournaments</Link>
+              <Button asChild className="mt-4 bg-primary hover:bg-primary/90">
+                <Link href="/tournaments">
+                  Browse Tournaments
+                </Link>
               </Button>
             </div>
           </Card>
-        )}
-      </section>
-      
-      {/* Upcoming Tournaments Section */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold font-poppins">Upcoming Tournaments</h2>
-          <Button variant="link" asChild className="text-primary">
-            <Link href="/tournaments">
-              <div className="flex items-center">
-                View All <ArrowRight className="ml-1 h-4 w-4" />
-              </div>
-            </Link>
-          </Button>
         </div>
         
-        {upcomingTournaments.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {upcomingTournaments.map((tournament, index) => (
-              <Card key={tournament.id} className="bg-dark-card border-gray-800 overflow-hidden flex flex-col">
-                <div 
-                  className="h-40 bg-cover bg-center" 
-                  style={{ backgroundImage: `url(${tournament.image})` }}
-                >
-                  <div className="w-full h-full bg-gradient-to-b from-transparent to-dark/90 flex items-end p-4">
-                    <div>
-                      <div className="flex gap-2 mb-2">
-                        <Badge className="bg-primary">{tournament.gameMode}</Badge>
-                        <Badge variant="outline" className="border-gray-700">
-                          {tournament.mode}
-                        </Badge>
-                      </div>
-                      <h3 className="font-semibold text-lg">{tournament.title}</h3>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-4 flex-grow">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1">Entry Fee</p>
-                      <p className="font-medium font-rajdhani">
-                        {formatCurrency(tournament.entryFee, user.currency)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1">Prize Pool</p>
-                      <p className="font-medium text-green-400 font-rajdhani">
-                        {formatCurrency(tournament.prizePool, user.currency)}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <Separator className="my-4 bg-gray-800" />
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1">Map</p>
-                      <div className="flex items-center">
-                        <MapPin className="h-3 w-3 mr-1 text-gray-500" />
-                        <p className="font-medium">{tournament.map}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1">Per Kill</p>
-                      <div className="flex items-center">
-                        <Sword className="h-3 w-3 mr-1 text-gray-500" />
-                        <p className="font-medium">
-                          {formatCurrency(tournament.perKill, user.currency)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <p className="text-xs text-gray-400 mb-1">Players</p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Users className="h-3 w-3 mr-1 text-gray-500" />
-                        <p className="font-medium">
-                          {/* This would be dynamic in a real app */}
-                          {Math.floor(Math.random() * tournament.maxPlayers)}/{tournament.maxPlayers}
-                        </p>
-                      </div>
-                      <div className="text-xs text-yellow-400">
-                        {remainingSeconds[index] > 0 
-                          ? formatTimeRemaining(remainingSeconds[index]) 
-                          : "Starting soon"}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-4 pt-0">
-                  <Button asChild className="w-full bg-gradient-to-r from-primary to-secondary">
-                    <Link href={`/tournament/${tournament.id}`}>
-                      View Details
-                    </Link>
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="bg-dark-card border-gray-800 p-8 text-center">
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* User Profile Card */}
+          <Card className="bg-dark-card border-gray-800 p-6">
             <div className="flex flex-col items-center">
-              <Trophy className="h-12 w-12 text-gray-600 mb-3" />
-              <h3 className="text-lg font-medium mb-2">No Upcoming Tournaments</h3>
-              <p className="text-gray-400 mb-4">
-                Check back later for new tournaments
-              </p>
+              <Avatar className="h-20 w-20 border-2 border-primary/20">
+                <AvatarImage src={user.profilePicture || undefined} alt={user.username} />
+                <AvatarFallback className="bg-primary/20 text-lg">
+                  {user.username.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              
+              <h2 className="text-xl font-semibold mt-4">{user.username}</h2>
+              
+              <div className="flex gap-2 mt-2">
+                <Badge variant="outline" className="border-primary text-primary">
+                  {user.gameMode}
+                </Badge>
+                <Badge variant="outline" className="border-gray-600 text-gray-400">
+                  {user.country}
+                </Badge>
+              </div>
+              
+              {user.gameId && (
+                <div className="mt-3 px-3 py-1 bg-dark-lighter rounded-full text-sm flex items-center">
+                  <Gamepad className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
+                  <span className="font-mono">{user.gameId}</span>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-2 gap-4 w-full mt-6">
+                <Button asChild variant="outline" className="border-gray-700">
+                  <Link href="/profile">
+                    Edit Profile
+                  </Link>
+                </Button>
+                
+                <Button asChild className="bg-primary hover:bg-primary/90">
+                  <Link href="/squad">
+                    <Users className="mr-2 h-4 w-4" />
+                    Squad
+                  </Link>
+                </Button>
+              </div>
             </div>
           </Card>
-        )}
-      </section>
+          
+          {/* Stats Card */}
+          <Card className="bg-dark-card border-gray-800 p-6">
+            <h2 className="text-lg font-semibold mb-4">Stats</h2>
+            
+            <div className="space-y-3">
+              <div className="p-3 bg-dark-lighter rounded-lg flex justify-between">
+                <div className="text-gray-400">Tournaments Played</div>
+                <div className="font-medium">0</div>
+              </div>
+              <div className="p-3 bg-dark-lighter rounded-lg flex justify-between">
+                <div className="text-gray-400">Matches Won</div>
+                <div className="font-medium">0</div>
+              </div>
+              <div className="p-3 bg-dark-lighter rounded-lg flex justify-between">
+                <div className="text-gray-400">Total Earnings</div>
+                <div className="font-medium text-green-400">
+                  {formatCurrency(0, user.currency)}
+                </div>
+              </div>
+            </div>
+            
+            <Button asChild variant="outline" className="w-full mt-4 border-gray-700">
+              <Link href="/leaderboard">
+                <ArrowUpRight className="mr-2 h-4 w-4" />
+                View Leaderboard
+              </Link>
+            </Button>
+          </Card>
+          
+          {/* Notifications */}
+          <Card className="bg-dark-card border-gray-800 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Notifications</h2>
+              <Bell className="h-4 w-4 text-gray-400" />
+            </div>
+            
+            {recentNotifications.length > 0 ? (
+              <div className="space-y-3">
+                {recentNotifications.map(notification => (
+                  <div
+                    key={notification.id}
+                    className={`p-3 ${!notification.read ? 'bg-primary/5 border border-primary/20' : 'bg-dark-lighter'} rounded-lg cursor-pointer`}
+                    onClick={() => handleNotificationClick(notification.id)}
+                  >
+                    <div className="flex justify-between">
+                      <h3 className="font-medium">{notification.title}</h3>
+                      <span className="text-xs text-gray-500">
+                        {new Date(notification.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-400 mt-1">
+                      {notification.message}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-gray-400">No notifications yet</p>
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

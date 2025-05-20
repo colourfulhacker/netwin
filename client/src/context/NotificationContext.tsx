@@ -1,10 +1,5 @@
-import { createContext, useState, useEffect, ReactNode, useCallback } from "react";
+import { createContext, useState, useCallback, ReactNode } from "react";
 import { Notification } from "@/types";
-import {
-  getUserNotifications,
-  addNotification as addNotificationHelper,
-  markNotificationAsRead
-} from "@/utils/helpers";
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -19,7 +14,7 @@ interface NotificationContextType {
 export const NotificationContext = createContext<NotificationContextType>({
   notifications: [],
   unreadCount: 0,
-  loading: true,
+  loading: false,
   addNotification: () => {},
   markAsRead: () => {},
   markAllAsRead: () => {},
@@ -32,80 +27,69 @@ interface NotificationProviderProps {
 
 export const NotificationProvider = ({ children }: NotificationProviderProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(false);
   
-  // Get notifications on component mount
-  useEffect(() => {
+  const unreadCount = useCallback(() => {
+    return notifications.filter(n => !n.read).length;
+  }, [notifications]);
+  
+  const addNotification = useCallback((notification: Omit<Notification, "id" | "createdAt">) => {
+    setLoading(true);
+    
+    // Create a new notification
+    const newNotification: Notification = {
+      ...notification,
+      id: notifications.length + 1,
+      createdAt: new Date(),
+      read: false
+    };
+    
+    setNotifications(prev => [...prev, newNotification]);
+    setLoading(false);
+  }, [notifications]);
+  
+  const markAsRead = useCallback((userId: number, notificationId: number) => {
+    setLoading(true);
+    
+    setNotifications(prev => prev.map(notification => {
+      if (notification.id === notificationId && notification.userId === userId) {
+        return { ...notification, read: true };
+      }
+      return notification;
+    }));
+    
     setLoading(false);
   }, []);
   
-  // Add a new notification
-  const addNotification = useCallback((notification: Omit<Notification, "id" | "createdAt">) => {
-    const newNotification: Notification = {
-      ...notification,
-      id: Date.now(),
-      createdAt: new Date().toISOString()
-    };
-    
-    addNotificationHelper(newNotification);
-    
-    // Update state with new notification
-    setNotifications(prev => [newNotification, ...prev]);
-    if (!newNotification.read) {
-      setUnreadCount(prev => prev + 1);
-    }
-  }, []);
-  
-  // Mark a notification as read
-  const markAsRead = useCallback((userId: number, notificationId: number) => {
-    markNotificationAsRead(userId, notificationId);
-    
-    // Update state
-    setNotifications(prev => 
-      prev.map(n => 
-        n.id === notificationId ? { ...n, read: true } : n
-      )
-    );
-    
-    // Update unread count
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  }, []);
-  
-  // Mark all notifications as read
   const markAllAsRead = useCallback((userId: number) => {
-    const userNotifications = getUserNotifications(userId);
+    setLoading(true);
     
-    // Mark all as read in localStorage
-    const updatedNotifications = userNotifications.map(n => ({ ...n, read: true }));
-    localStorage.setItem('netwin_notifications', JSON.stringify(updatedNotifications));
+    setNotifications(prev => prev.map(notification => {
+      if (notification.userId === userId) {
+        return { ...notification, read: true };
+      }
+      return notification;
+    }));
     
-    // Update state
-    setNotifications(updatedNotifications);
-    setUnreadCount(0);
+    setLoading(false);
   }, []);
   
-  // Get notifications for a user
   const getNotifications = useCallback((userId: number): Notification[] => {
-    const userNotifications = getUserNotifications(userId);
-    
-    // Update state
-    setNotifications(userNotifications);
-    setUnreadCount(userNotifications.filter(n => !n.read).length);
-    
-    return userNotifications;
-  }, []);
+    return notifications.filter(notification => notification.userId === userId);
+  }, [notifications]);
   
   return (
-    <NotificationContext.Provider value={{
-      notifications,
-      unreadCount,
-      loading,
-      addNotification,
-      markAsRead,
-      markAllAsRead,
-      getNotifications
-    }}>
+    <NotificationContext.Provider
+      value={{
+        notifications,
+        unreadCount: unreadCount(),
+        loading,
+        addNotification,
+        markAsRead,
+        markAllAsRead,
+        getNotifications
+      }}
+    >
       {children}
     </NotificationContext.Provider>
   );

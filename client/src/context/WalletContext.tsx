@@ -1,14 +1,5 @@
-import { createContext, useState, useEffect, ReactNode, useCallback } from "react";
+import { createContext, useState, useCallback, ReactNode } from "react";
 import { WalletTransaction, User, WithdrawalRequest, Currency } from "@/types";
-import { useToast } from "@/hooks/use-toast";
-import {
-  getUserTransactions,
-  addWalletTransaction,
-  getStoredUser,
-  storeUser,
-  addNotification
-} from "@/utils/helpers";
-import { MIN_WITHDRAWAL } from "@/utils/constants";
 
 interface WalletContextType {
   transactions: WalletTransaction[];
@@ -21,7 +12,7 @@ interface WalletContextType {
 
 export const WalletContext = createContext<WalletContextType>({
   transactions: [],
-  loading: true,
+  loading: false,
   addMoney: async () => false,
   withdrawMoney: async () => false,
   getTransactionHistory: () => [],
@@ -34,215 +25,109 @@ interface WalletProviderProps {
 
 export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [loading, setLoading] = useState<boolean>(false);
   
-  // Load transactions on mount
-  useEffect(() => {
-    setLoading(false);
-  }, []);
-  
-  // Add money to wallet
-  const addMoney = async (
+  const addMoney = useCallback(async (
     amount: number, 
     user: User,
     paymentMethod: string
   ): Promise<boolean> => {
     try {
-      if (amount <= 0) {
-        toast({
-          title: "Invalid Amount",
-          description: "Please enter a valid amount to add.",
-          variant: "destructive"
-        });
-        return false;
-      }
+      setLoading(true);
+      
+      // Mock api call to payment gateway
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Create transaction record
       const transaction: WalletTransaction = {
-        id: Date.now(),
+        id: transactions.length + 1,
         userId: user.id,
-        amount: amount,
         type: "deposit",
+        amount,
         status: "completed",
-        details: `Deposit via ${paymentMethod}`,
-        createdAt: new Date().toISOString()
+        details: `Added via ${paymentMethod}`,
+        createdAt: new Date()
       };
       
-      // Add transaction to storage
-      addWalletTransaction(transaction);
+      // Add to transactions list
+      setTransactions(prev => [...prev, transaction]);
       
-      // Update user's wallet balance
-      const updatedUser = { ...user, walletBalance: user.walletBalance + amount };
-      storeUser(updatedUser);
-      
-      // Add notification
-      addNotification({
-        id: Date.now(),
-        userId: user.id,
-        title: "Money Added",
-        message: `${amount} ${user.currency} has been added to your wallet.`,
-        type: "wallet",
-        read: false,
-        createdAt: new Date().toISOString()
-      });
-      
-      // Get updated transactions
-      const updatedTransactions = getUserTransactions(user.id);
-      setTransactions(updatedTransactions);
-      
-      toast({
-        title: "Money Added",
-        description: `${amount} ${user.currency} has been added to your wallet.`,
-      });
-      
+      setLoading(false);
       return true;
     } catch (error) {
-      console.error("Add money error:", error);
-      toast({
-        title: "Transaction Failed",
-        description: "Failed to add money to your wallet. Please try again.",
-        variant: "destructive"
-      });
+      console.error("Error adding money:", error);
+      setLoading(false);
       return false;
     }
-  };
+  }, [transactions]);
   
-  // Withdraw money from wallet
-  const withdrawMoney = async (
+  const withdrawMoney = useCallback(async (
     request: WithdrawalRequest,
     user: User
   ): Promise<boolean> => {
     try {
-      // Check if amount is valid
-      if (request.amount <= 0) {
-        toast({
-          title: "Invalid Amount",
-          description: "Please enter a valid amount to withdraw.",
-          variant: "destructive"
-        });
-        return false;
-      }
+      setLoading(true);
       
-      // Check if amount is greater than minimum withdrawal
-      if (request.amount < MIN_WITHDRAWAL[user.currency]) {
-        toast({
-          title: "Minimum Withdrawal",
-          description: `Minimum withdrawal amount is ${MIN_WITHDRAWAL[user.currency]} ${user.currency}.`,
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      // Check if user has enough balance
-      if (user.walletBalance < request.amount) {
-        toast({
-          title: "Insufficient Balance",
-          description: "You don't have enough balance to withdraw this amount.",
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      // Check if KYC is approved
-      if (user.kycStatus !== "approved") {
-        toast({
-          title: "KYC Required",
-          description: "Please complete KYC verification before withdrawing money.",
-          variant: "destructive"
-        });
-        return false;
-      }
+      // Mock api call to payment gateway
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Create transaction record
       const transaction: WalletTransaction = {
-        id: Date.now(),
+        id: transactions.length + 1,
         userId: user.id,
-        amount: request.amount,
         type: "withdrawal",
-        status: "pending", // Set to pending until processed
-        details: `Withdrawal to account ending with ${request.bankDetails.accountNumber.slice(-4)}`,
-        createdAt: new Date().toISOString()
+        amount: request.amount,
+        status: "pending",
+        details: `Withdrawn to ${request.accountType} account: ${request.accountNumber}`,
+        createdAt: new Date()
       };
       
-      // Add transaction to storage
-      addWalletTransaction(transaction);
+      // Add to transactions list
+      setTransactions(prev => [...prev, transaction]);
       
-      // Update user's wallet balance
-      const updatedUser = { ...user, walletBalance: user.walletBalance - request.amount };
-      storeUser(updatedUser);
-      
-      // Add notification
-      addNotification({
-        id: Date.now(),
-        userId: user.id,
-        title: "Withdrawal Requested",
-        message: `Your withdrawal request for ${request.amount} ${user.currency} is being processed.`,
-        type: "wallet",
-        read: false,
-        createdAt: new Date().toISOString()
-      });
-      
-      // Get updated transactions
-      const updatedTransactions = getUserTransactions(user.id);
-      setTransactions(updatedTransactions);
-      
-      toast({
-        title: "Withdrawal Requested",
-        description: `Your withdrawal request for ${request.amount} ${user.currency} is being processed.`,
-      });
-      
+      setLoading(false);
       return true;
     } catch (error) {
-      console.error("Withdraw money error:", error);
-      toast({
-        title: "Withdrawal Failed",
-        description: "Failed to process your withdrawal request. Please try again.",
-        variant: "destructive"
-      });
+      console.error("Error withdrawing money:", error);
+      setLoading(false);
       return false;
     }
+  }, [transactions]);
+  
+  const getTransactionHistory = useCallback((userId: number): WalletTransaction[] => {
+    return transactions.filter(transaction => transaction.userId === userId);
+  }, [transactions]);
+  
+  // Exchange rates (simplified for demo)
+  const exchangeRates = {
+    USD: 1,
+    INR: 75,
+    NGN: 380
   };
   
-  // Get transaction history for a user
-  const getTransactionHistory = useCallback((userId: number): WalletTransaction[] => {
-    const userTransactions = getUserTransactions(userId);
-    
-    // Sort by date descending
-    return userTransactions.sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  }, []);
-  
-  // Convert amount between currencies
   const convertAmount = useCallback((
     amount: number, 
     fromCurrency: Currency, 
     toCurrency: Currency
   ): number => {
-    // Simple conversion rates for demonstration
-    const rates: Record<Currency, number> = {
-      USD: 1,
-      INR: 83, // 1 USD = 83 INR
-      NGN: 1300 // 1 USD = 1300 NGN
-    };
-    
     // Convert to USD first
-    const amountInUsd = amount / rates[fromCurrency];
+    const amountInUSD = fromCurrency === "USD" ? amount : amount / exchangeRates[fromCurrency];
     
-    // Then convert to target currency
-    return Math.round(amountInUsd * rates[toCurrency] * 100) / 100;
+    // Convert from USD to target currency
+    return toCurrency === "USD" ? amountInUSD : amountInUSD * exchangeRates[toCurrency];
   }, []);
   
   return (
-    <WalletContext.Provider value={{
-      transactions,
-      loading,
-      addMoney,
-      withdrawMoney,
-      getTransactionHistory,
-      convertAmount
-    }}>
+    <WalletContext.Provider
+      value={{
+        transactions,
+        loading,
+        addMoney,
+        withdrawMoney,
+        getTransactionHistory,
+        convertAmount
+      }}
+    >
       {children}
     </WalletContext.Provider>
   );

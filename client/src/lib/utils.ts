@@ -1,175 +1,156 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-/**
- * Combines multiple class names with Tailwind CSS classes
- */
+// Types for currency
+export type Currency = "USD" | "INR" | "NGN";
+
+// Utility for merging Tailwind CSS classes
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/**
- * Format currency based on country code
- */
-export function formatCurrency(amount: number, currency: 'INR' | 'NGN' | 'USD'): string {
-  const currencySymbols = {
-    INR: '₹',
-    NGN: '₦',
-    USD: '$'
+// Format currency based on currency code
+export function formatCurrency(amount: number, currency: string = 'USD'): string {
+  const formatOptions: Intl.NumberFormatOptions = {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
   };
-
-  return `${currencySymbols[currency]}${amount.toLocaleString()}`;
+  
+  return new Intl.NumberFormat('en-US', formatOptions).format(amount);
 }
 
-/**
- * Parse currency string to number
- */
+// Parse currency string to number
 export function parseCurrency(value: string): number {
-  // Remove currency symbols and commas
-  return Number(value.replace(/[₹₦$,]/g, ''));
+  // Remove currency symbols, commas and other non-numeric characters except decimal point
+  const numericValue = value.replace(/[^0-9.]/g, '');
+  return parseFloat(numericValue) || 0;
 }
 
-/**
- * Format date as "Day, HH:MM AM/PM"
- */
-export function formatMatchTime(date: Date): string {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+// Generate initials from username
+export function getInitials(name: string): string {
+  if (!name) return '';
   
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  
-  const dateToCheck = new Date(date);
-  dateToCheck.setHours(0, 0, 0, 0);
-  
-  let prefix = '';
-  
-  if (dateToCheck.getTime() === today.getTime()) {
-    prefix = 'Today';
-  } else if (dateToCheck.getTime() === tomorrow.getTime()) {
-    prefix = 'Tomorrow';
-  } else {
-    prefix = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const parts = name.split(' ');
+  if (parts.length === 1) {
+    return name.substring(0, 2).toUpperCase();
   }
   
-  const timeStr = date.toLocaleTimeString('en-US', { 
-    hour: 'numeric', 
-    minute: '2-digit',
-    hour12: true 
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+// Format date to readable string
+export function formatDate(date: Date): string {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   });
-  
-  return `${prefix}, ${timeStr}`;
 }
 
-/**
- * Validates a phone number for the given country code
- */
-export function validatePhoneNumber(phoneNumber: string, countryCode: string): boolean {
-  // Remove any non-digit characters
-  const cleanNumber = phoneNumber.replace(/\D/g, '');
-  
-  // Basic validation based on country code (can be enhanced)
-  switch(countryCode) {
-    case '+91': // India
-      return cleanNumber.length === 10;
-    case '+234': // Nigeria
-      return cleanNumber.length === 10 || cleanNumber.length === 11;
-    case '+1': // US
-      return cleanNumber.length === 10;
-    default:
-      return cleanNumber.length >= 7 && cleanNumber.length <= 15;
-  }
+// Format time to readable string
+export function formatTime(date: Date): string {
+  return new Date(date).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
-/**
- * Convert local time to UTC or vice versa
- */
-export function convertToUTC(date: Date): Date {
-  return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+// Format match time (date and time together)
+export function formatMatchTime(date: Date): string {
+  return `${formatDate(date)} at ${formatTime(date)}`;
 }
 
-export function convertFromUTC(date: Date): Date {
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-}
-
-/**
- * Get remaining time (in seconds) until a future date
- */
-export function getTimeRemainingInSeconds(futureDate: Date): number {
+// Get time remaining in seconds
+export function getTimeRemainingInSeconds(targetDate: Date): number {
   const now = new Date();
-  const diff = futureDate.getTime() - now.getTime();
-  return Math.max(0, Math.floor(diff / 1000));
+  const difference = targetDate.getTime() - now.getTime();
+  return Math.max(0, Math.floor(difference / 1000));
 }
 
-/**
- * Format remaining seconds to HH:MM:SS
- */
+// Format time remaining in human-readable format
 export function formatTimeRemaining(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
+  if (seconds <= 0) {
+    return "Started";
+  }
   
-  return [
-    hours.toString().padStart(2, '0'),
-    minutes.toString().padStart(2, '0'),
-    secs.toString().padStart(2, '0')
-  ].join(':');
-}
-
-/**
- * Determine appropriate country codes based on browser language
- */
-export function getDefaultCountryCode(): string {
-  const language = navigator.language || 'en-US';
+  const days = Math.floor(seconds / (24 * 60 * 60));
+  seconds -= days * 24 * 60 * 60;
   
-  // Simplified mapping based on common languages
-  if (language.includes('en-IN') || language.includes('hi')) {
-    return '+91'; // India
-  } else if (language.includes('en-NG')) {
-    return '+234'; // Nigeria
+  const hours = Math.floor(seconds / (60 * 60));
+  seconds -= hours * 60 * 60;
+  
+  const minutes = Math.floor(seconds / 60);
+  seconds -= minutes * 60;
+  
+  if (days > 0) {
+    return `${days}d ${hours}h`;
+  } else if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  } else if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
   } else {
-    return '+1'; // Default to US
+    return `${seconds}s`;
   }
 }
 
-/**
- * Validate PUBG/BGMI player ID format
- */
-export function validateGameId(id: string, game: 'PUBG' | 'BGMI'): boolean {
-  // Different validation rules for different games
-  if (game === 'PUBG') {
-    return /^\d{9,12}$/.test(id); // PUBG IDs are typically 9-12 digits
-  } else {
-    return /^\d{8,10}$/.test(id); // BGMI IDs are typically 8-10 digits
+// Generate a random avatar URL based on username
+export function generateAvatarUrl(username: string): string {
+  const seed = encodeURIComponent(username);
+  return `https://avatars.dicebear.com/api/bottts/${seed}.svg`;
+}
+
+// Convert file to base64 string
+export function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+}
+
+// Validate phone number format
+export function validatePhoneNumber(phoneNumber: string): boolean {
+  // Basic validation - can be expanded for country-specific rules
+  return /^\d{10,15}$/.test(phoneNumber.replace(/[\s-]/g, ''));
+}
+
+// Validate game ID format
+export function validateGameId(gameId: string, gameMode: string): boolean {
+  if (!gameId) return false;
+  
+  // Different validation based on game mode
+  if (gameMode === "PUBG") {
+    // PUBG IDs are typically 8-10 digits
+    return /^\d{8,10}$/.test(gameId);
+  } else if (gameMode === "BGMI") {
+    // BGMI IDs are typically 8-10 digits with possible letters
+    return /^[A-Za-z0-9]{8,12}$/.test(gameId);
+  }
+  
+  return false;
+}
+
+// Get default country code based on currency
+export function getDefaultCountryCode(currency: Currency): string {
+  switch (currency) {
+    case "INR": return "+91"; // India
+    case "NGN": return "+234"; // Nigeria
+    case "USD": return "+1"; // US
+    default: return "+1";
   }
 }
 
-/**
- * Get country based on country code
- */
-export function getCountryFromCode(countryCode: string): string {
-  switch(countryCode) {
-    case '+91':
-      return 'India';
-    case '+234':
-      return 'Nigeria';
-    case '+1':
-      return 'USA';
-    default:
-      return 'Other';
-  }
-}
-
-/**
- * Get required KYC documents based on country
- */
+// Get required KYC documents based on country
 export function getRequiredKycDocuments(country: string): string[] {
-  switch(country) {
-    case 'India':
-      return ['Aadhaar Card', 'PAN Card', 'Voter ID (Optional)'];
-    case 'Nigeria':
-      return ['NIN', 'Voter ID', 'Passport (Optional)'];
+  switch (country.toLowerCase()) {
+    case "india":
+      return ["Aadhaar Card", "PAN Card", "Driving License"];
+    case "nigeria":
+      return ["National ID Card", "BVN", "Driver's License"];
     default:
-      return ['Passport', 'Government ID'];
+      return ["Passport", "National ID", "Driver's License"];
   }
 }

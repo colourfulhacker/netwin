@@ -31,7 +31,7 @@
   }
 
   body {
-    @apply font-inter antialiased bg-background text-foreground;
+    @apply antialiased bg-background text-foreground;
   }
 }
 

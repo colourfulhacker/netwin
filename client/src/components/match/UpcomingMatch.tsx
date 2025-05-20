@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Match } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
-import { formatMatchTime } from "@/lib/utils";
-import { getTimeRemainingInSeconds, formatTimeRemaining } from "@/utils/utils";
+import { formatMatchTime, getTimeRemainingInSeconds, formatTimeRemaining } from "@/lib/utils";
 import CountdownTimer from "@/components/common/CountdownTimer";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -110,27 +109,40 @@ const UpcomingMatch = ({ match }: UpcomingMatchProps) => {
       <div className="mt-6">
         <h4 className="text-sm font-medium text-gray-400 mb-3">Your Squad</h4>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {match.teamMembers.map((member) => (
-            <div 
-              key={member.id} 
-              className={`bg-dark-lighter rounded-lg p-3 flex items-center gap-3 ${
-                member.isOwner ? 'border-2 border-primary' : ''
-              }`}
-            >
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={member.profilePicture} alt={member.username} />
-                <AvatarFallback className="bg-primary/20">
-                  {member.username.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-medium">{member.username}</div>
-                <div className="text-xs text-gray-400">
-                  {member.isOwner ? "You" : "Friend"}
+          {/* Get user information */}
+          <div className="bg-dark-lighter rounded-lg p-3 flex items-center gap-3 border-2 border-primary">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={user?.profilePicture || undefined} alt={user?.username || "User"} />
+              <AvatarFallback className="bg-primary/20">
+                {user?.username ? user.username.substring(0, 2).toUpperCase() : "US"}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-medium">{user?.username || "You"}</div>
+              <div className="text-xs text-gray-400">You</div>
+            </div>
+          </div>
+          
+          {/* Show teammates (excluding the current user) */}
+          {match.teamMembers
+            .filter(id => id !== user?.id)
+            .map((memberId, index) => (
+              <div 
+                key={`member-${memberId}-${index}`} 
+                className="bg-dark-lighter rounded-lg p-3 flex items-center gap-3"
+              >
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback className="bg-primary/20">
+                    TM
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-medium">Teammate {index + 1}</div>
+                  <div className="text-xs text-gray-400">Friend</div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          }
           
           {/* Fill empty slots based on match mode */}
           {match.mode === "SQUAD" && match.teamMembers.length < 4 && (
@@ -180,7 +192,7 @@ const UpcomingMatch = ({ match }: UpcomingMatchProps) => {
           <div className={`p-3 ${roomVisible ? 'bg-dark-card' : 'border border-dashed border-gray-700'} rounded-lg`}>
             <div className="text-xs text-gray-400 mb-1">Room Password</div>
             {roomVisible && match.roomDetails ? (
-              <div className="font-mono font-medium">{match.roomDetails.password}</div>
+              <div className="font-mono font-medium">{match.roomDetails.roomPassword}</div>
             ) : (
               <div className="text-gray-500">••••••</div>
             )}

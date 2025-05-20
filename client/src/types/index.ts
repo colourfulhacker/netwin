@@ -1,161 +1,133 @@
-// User Types
+export type Currency = "USD" | "INR" | "NGN";
+
 export interface User {
   id: number;
   username: string;
   phoneNumber: string;
   countryCode: string;
-  email?: string;
-  gameId?: string;
-  gameMode: "PUBG" | "BGMI";
-  role: "player" | "admin";
-  profilePicture?: string;
-  kycStatus: "pending" | "approved" | "rejected" | "not_submitted";
-  currency: Currency;
+  email: string | null;
+  password: string;
+  gameId: string | null;
+  gameMode: string;
+  profilePicture: string | null;
   walletBalance: number;
+  kycStatus: string;
+  role: string;
+  createdAt: Date;
   country: string;
-  createdAt: string;
+  currency: Currency;
 }
 
-export type Currency = "INR" | "NGN" | "USD";
-
-// Tournament Types
 export interface Tournament {
   id: number;
   title: string;
-  description?: string;
+  map: string;
+  mode: string;
   image: string;
-  mode: "SOLO" | "DUO" | "SQUAD" | "TDM";
+  date: Date;
+  gameMode: string;
+  status: string;
+  description: string | null;
   entryFee: number;
   prizePool: number;
   perKill: number;
-  date: string;
-  map: "Erangel" | "Miramar" | "Sanhok" | "Vikendi" | "Livik";
   maxPlayers: number;
   registeredPlayers: number;
-  status: "upcoming" | "live" | "completed" | "cancelled";
-  roomDetails?: RoomDetails;
-  results?: TournamentResult;
-  gameMode: "PUBG" | "BGMI";
+  createdAt: Date;
+  results: any; // Tournament results
+  roomDetails: any; // Room details
+  currency: Currency;
 }
 
-export interface RoomDetails {
-  roomId: string;
-  password: string;
-  visibleAt: string;
-}
-
-export interface TournamentResult {
-  winners: TeamResult[];
-  topKillers: KillerResult[];
-}
-
-export interface TeamResult {
-  teamId: number;
-  teamName: string;
-  position: number;
-  kills: number;
-  prize: number;
-}
-
-export interface KillerResult {
-  userId: number;
-  username: string;
-  kills: number;
-  prize: number;
-}
-
-// Match Types
 export interface Match {
   id: number;
   tournamentId: number;
   tournamentTitle: string;
-  date: string;
-  status: "upcoming" | "live" | "completed";
-  mode: "SOLO" | "DUO" | "SQUAD" | "TDM";
-  map: string;
-  position?: number;
-  kills?: number;
-  teamMembers: TeamMember[];
-  roomDetails?: RoomDetails;
-  resultSubmitted: boolean;
-  resultApproved: boolean;
-  resultScreenshot?: string;
-  prize?: number;
-}
-
-export interface TeamMember {
-  id: number;
-  username: string;
-  gameId: string;
-  profilePicture?: string;
-  kills?: number;
-  isOwner: boolean;
-}
-
-// Wallet Types
-export interface WalletTransaction {
-  id: number;
   userId: number;
-  amount: number;
-  type: "deposit" | "withdrawal" | "prize" | "entry_fee";
-  status: "pending" | "completed" | "failed";
-  details: string;
-  createdAt: string;
-}
-
-export interface WithdrawalRequest {
-  amount: number;
-  bankDetails: {
-    accountNumber: string;
-    ifsc?: string; // For India
-    accountName: string;
-    bankName: string;
-    swiftCode?: string; // For international
+  map: string;
+  mode: string;
+  date: Date;
+  status: string;
+  teamMembers: number[];
+  position: number | null;
+  kills: number | null;
+  result: string | null;
+  screenshot: string | null;
+  prize: number | null;
+  createdAt: Date;
+  roomDetails: {
+    roomId: string | null;
+    roomPassword: string | null;
+    startTime: Date;
   };
 }
 
-// KYC Types
+export interface WalletTransaction {
+  id: number;
+  userId: number;
+  type: string;
+  amount: number;
+  status: string;
+  details: string | null;
+  createdAt: Date;
+}
+
 export interface KycDocument {
   id: number;
   userId: number;
   type: string;
   documentNumber: string;
   frontImage: string;
-  backImage?: string;
-  selfie?: string;
-  status: "pending" | "approved" | "rejected";
-  rejectionReason?: string;
-  createdAt: string;
+  backImage: string | null;
+  selfie: string | null;
+  status: string;
+  rejectionReason: string | null;
+  createdAt: Date;
 }
 
-// Notification Types
 export interface Notification {
   id: number;
   userId: number;
   title: string;
   message: string;
-  type: "match" | "wallet" | "admin" | "promo";
+  type: string;
   read: boolean;
-  createdAt: string;
+  createdAt: Date;
 }
 
-// Leaderboard Types
-export interface LeaderboardEntry {
-  userId: number;
+export interface SquadMember {
+  id: number;
+  ownerId: number;
   username: string;
-  country: string;
-  profilePicture?: string;
-  matches: number;
-  kills: number;
-  wins: number;
-  earnings: number;
-  currency: Currency;
+  gameId: string;
+  profilePicture: string | null;
+  createdAt: Date;
 }
 
-// Authentication Types
+export interface WithdrawalRequest {
+  amount: number;
+  accountNumber: string;
+  accountType: string;
+  accountName: string;
+  ifscCode?: string;
+  bankName?: string;
+}
+
 export interface LoginCredentials {
   phoneNumber: string;
   countryCode: string;
+  password: string;
+}
+
+export interface SignupData {
+  username: string;
+  phoneNumber: string;
+  countryCode: string;
+  password: string;
+  gameMode: "PUBG" | "BGMI";
+  gameId?: string;
+  currency: Currency;
+  country: string;
 }
 
 export interface OtpVerification {
@@ -164,21 +136,17 @@ export interface OtpVerification {
   otp: string;
 }
 
-export interface SignupData {
-  username: string;
-  phoneNumber: string;
-  countryCode: string;
-  email?: string;
-  gameId?: string;
-  gameMode: "PUBG" | "BGMI";
-}
-
-// Admin Types
-export interface AdminDashboardStats {
-  totalUsers: number;
-  activeTournaments: number;
-  completedTournaments: number;
-  totalRevenue: number;
-  pendingKyc: number;
-  recentTransactions: WalletTransaction[];
+export interface TournamentFilters {
+  gameMode?: string;
+  entryFee?: {
+    min?: number;
+    max?: number;
+  };
+  map?: string;
+  date?: {
+    from?: Date;
+    to?: Date;
+  };
+  status?: string;
+  currency?: Currency;
 }

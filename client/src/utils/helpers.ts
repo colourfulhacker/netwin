@@ -1,360 +1,262 @@
-import {
+import { 
   STORAGE_KEYS,
   CURRENCY_CONVERSION,
-  COUNTRY_CODES
+  COUNTRIES,
+  TRANSACTION_TYPES,
+  KYC_STATUS
 } from "./constants";
-import { User, Currency, Tournament, Match, WalletTransaction, Notification, LeaderboardEntry } from "@/types";
+import { Currency } from "@/lib/utils";
+import { 
+  Tournament, 
+  Match, 
+  WalletTransaction, 
+  KycDocument, 
+  SquadMember, 
+  LeaderboardEntry,
+  User
+} from "@/types";
 
-/**
- * Local Storage Management (for simulating backend)
- */
-
-// Get stored user
-export const getStoredUser = (): User | null => {
-  const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-  if (!userStr) return null;
-  
-  try {
-    return JSON.parse(userStr) as User;
-  } catch (error) {
-    console.error("Failed to parse user from localStorage", error);
-    return null;
-  }
-};
-
-// Store user
-export const storeUser = (user: User): void => {
-  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-};
-
-// Store auth token
-export const storeAuthToken = (token: string): void => {
-  localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-};
-
-// Get auth token
-export const getAuthToken = (): string | null => {
-  return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-};
-
-// Remove auth token (logout)
-export const removeAuthToken = (): void => {
-  localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-  localStorage.removeItem(STORAGE_KEYS.USER);
-};
-
-// Store preferred currency
-export const storePreferredCurrency = (currency: Currency): void => {
-  localStorage.setItem(STORAGE_KEYS.CURRENCY, currency);
-};
-
-// Get preferred currency
-export const getPreferredCurrency = (): Currency => {
-  return (localStorage.getItem(STORAGE_KEYS.CURRENCY) as Currency) || "USD";
-};
-
-// Store preferred game mode
-export const storePreferredGameMode = (gameMode: "PUBG" | "BGMI"): void => {
-  localStorage.setItem(STORAGE_KEYS.GAME_MODE, gameMode);
-};
-
-// Get preferred game mode
-export const getPreferredGameMode = (): "PUBG" | "BGMI" => {
-  return (localStorage.getItem(STORAGE_KEYS.GAME_MODE) as "PUBG" | "BGMI") || "PUBG";
-};
-
-/**
- * Tournament Data Management
- */
-
-// Get tournaments from localStorage
-export const getStoredTournaments = (): Tournament[] => {
-  const tournamentsStr = localStorage.getItem(STORAGE_KEYS.TOURNAMENTS);
-  if (!tournamentsStr) return [];
-  
-  try {
-    return JSON.parse(tournamentsStr) as Tournament[];
-  } catch (error) {
-    console.error("Failed to parse tournaments from localStorage", error);
-    return [];
-  }
-};
-
-// Store tournaments to localStorage
-export const storeTournaments = (tournaments: Tournament[]): void => {
-  localStorage.setItem(STORAGE_KEYS.TOURNAMENTS, JSON.stringify(tournaments));
-};
-
-// Get a single tournament by ID
-export const getTournamentById = (id: number): Tournament | undefined => {
-  const tournaments = getStoredTournaments();
-  return tournaments.find(t => t.id === id);
-};
-
-/**
- * Match Data Management
- */
-
-// Get user matches from localStorage
-export const getStoredMatches = (userId: number): Match[] => {
-  const matchesStr = localStorage.getItem(STORAGE_KEYS.MATCHES);
-  if (!matchesStr) return [];
-  
-  try {
-    const allMatches = JSON.parse(matchesStr) as Match[];
-    // Filter matches where the user is a team member
-    return allMatches.filter(match => 
-      match.teamMembers.some(member => member.id === userId)
-    );
-  } catch (error) {
-    console.error("Failed to parse matches from localStorage", error);
-    return [];
-  }
-};
-
-// Store matches to localStorage
-export const storeMatches = (matches: Match[]): void => {
-  localStorage.setItem(STORAGE_KEYS.MATCHES, JSON.stringify(matches));
-};
-
-// Get a single match by ID
-export const getMatchById = (id: number): Match | undefined => {
-  const matchesStr = localStorage.getItem(STORAGE_KEYS.MATCHES);
-  if (!matchesStr) return undefined;
-  
-  try {
-    const allMatches = JSON.parse(matchesStr) as Match[];
-    return allMatches.find(m => m.id === id);
-  } catch (error) {
-    console.error("Failed to parse matches from localStorage", error);
-    return undefined;
-  }
-};
-
-/**
- * Wallet and Transactions
- */
-
-// Get wallet transactions for a user
-export const getUserTransactions = (userId: number): WalletTransaction[] => {
-  const transactionsStr = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
-  if (!transactionsStr) return [];
-  
-  try {
-    const allTransactions = JSON.parse(transactionsStr) as WalletTransaction[];
-    return allTransactions.filter(t => t.userId === userId);
-  } catch (error) {
-    console.error("Failed to parse transactions from localStorage", error);
-    return [];
-  }
-};
-
-// Add new wallet transaction
-export const addWalletTransaction = (transaction: WalletTransaction): void => {
-  const transactions = getUserTransactions(transaction.userId);
-  transactions.push(transaction);
-  localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions));
-  
-  // Update user wallet balance
-  const user = getStoredUser();
-  if (user && user.id === transaction.userId) {
-    if (transaction.type === 'deposit' || transaction.type === 'prize') {
-      user.walletBalance += transaction.amount;
-    } else if (transaction.type === 'withdrawal' || transaction.type === 'entry_fee') {
-      user.walletBalance -= transaction.amount;
-    }
-    storeUser(user);
-  }
-};
-
-/**
- * Notifications
- */
-
-// Get notifications for a user
-export const getUserNotifications = (userId: number): Notification[] => {
-  const notificationsStr = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS);
-  if (!notificationsStr) return [];
-  
-  try {
-    const allNotifications = JSON.parse(notificationsStr) as Notification[];
-    return allNotifications.filter(n => n.userId === userId);
-  } catch (error) {
-    console.error("Failed to parse notifications from localStorage", error);
-    return [];
-  }
-};
-
-// Add new notification
-export const addNotification = (notification: Notification): void => {
-  const notifications = getUserNotifications(notification.userId);
-  notifications.push(notification);
-  localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(notifications));
-};
-
-// Mark notification as read
-export const markNotificationAsRead = (userId: number, notificationId: number): void => {
-  const notifications = getUserNotifications(userId);
-  const updatedNotifications = notifications.map(n => 
-    n.id === notificationId ? { ...n, read: true } : n
-  );
-  localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(updatedNotifications));
-};
-
-/**
- * Leaderboard
- */
-
-// Get leaderboard entries
-export const getLeaderboardEntries = (filter: 'daily' | 'weekly' | 'monthly' = 'weekly', country?: string): LeaderboardEntry[] => {
-  const leaderboardStr = localStorage.getItem(STORAGE_KEYS.LEADERBOARD);
-  if (!leaderboardStr) return [];
-  
-  try {
-    let entries = JSON.parse(leaderboardStr) as LeaderboardEntry[];
-    
-    // Filter by country if specified
-    if (country) {
-      entries = entries.filter(e => e.country === country);
-    }
-    
-    // Sort by earnings (descending)
-    return entries.sort((a, b) => b.earnings - a.earnings);
-  } catch (error) {
-    console.error("Failed to parse leaderboard from localStorage", error);
-    return [];
-  }
-};
-
-/**
- * Currency utilities
- */
-
-// Convert amount from one currency to another
-export const convertCurrency = (amount: number, from: Currency, to: Currency): number => {
-  if (from === to) return amount;
-  
-  // First convert to USD
-  const amountInUSD = from === 'USD' ? amount : amount * CURRENCY_CONVERSION[from];
-  
-  // Then convert from USD to target currency
-  return to === 'USD' ? amountInUSD : amountInUSD / CURRENCY_CONVERSION[to];
-};
-
-// Get currency symbol for a given country
-export const getCurrencySymbol = (countryCode: string): string => {
-  const country = COUNTRY_CODES.find(c => c.code === countryCode);
-  return country ? country.symbol : '$';
-};
-
-// Get currency for a given country
-export const getCurrencyForCountry = (countryCode: string): Currency => {
-  const country = COUNTRY_CODES.find(c => c.code === countryCode);
-  return (country ? country.currency : 'USD') as Currency;
-};
-
-/**
- * Authentication Simulation
- */
-
-// Simulate OTP generation
-export const generateOTP = (): string => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
-
-// Simulate OTP verification
-export const verifyOTP = (inputOTP: string, generatedOTP: string): boolean => {
-  // For demo purposes, any 6-digit code works
-  return inputOTP.length === 6 && /^\d{6}$/.test(inputOTP);
-};
-
-/**
- * Avatar utilities
- */
-
-// Generate avatar URL from username
-export const getAvatarUrl = (username: string): string => {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=6C3AFF&color=fff&size=200`;
-};
-
-/**
- * Tournament Sorting and Filtering
- */
-
-// Sort tournaments by date (ascending or descending)
-export const sortTournamentsByDate = (tournaments: Tournament[], ascending = true): Tournament[] => {
-  return [...tournaments].sort((a, b) => {
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
-    return ascending ? dateA - dateB : dateB - dateA;
-  });
-};
-
-// Filter tournaments by game mode
-export const filterTournamentsByGameMode = (tournaments: Tournament[], gameMode: "PUBG" | "BGMI"): Tournament[] => {
-  return tournaments.filter(t => t.gameMode === gameMode);
-};
-
-// Filter tournaments by status
-export const filterTournamentsByStatus = (tournaments: Tournament[], status: Tournament['status']): Tournament[] => {
-  return tournaments.filter(t => t.status === status);
-};
-
-// Filter tournaments by mode (SOLO, DUO, SQUAD, TDM)
-export const filterTournamentsByMode = (tournaments: Tournament[], mode: Tournament['mode']): Tournament[] => {
-  return tournaments.filter(t => t.mode === mode);
-};
-
-/**
- * Team Management
- */
-
-// Get user's squad members
-export const getSquadMembers = (userId: number): TeamMember[] => {
-  const squadStr = localStorage.getItem(STORAGE_KEYS.SQUAD);
-  if (!squadStr) return [];
-  
-  try {
-    const allSquads = JSON.parse(squadStr) as Record<number, TeamMember[]>;
-    return allSquads[userId] || [];
-  } catch (error) {
-    console.error("Failed to parse squad from localStorage", error);
-    return [];
-  }
-};
-
-// Add member to user's squad
-export const addSquadMember = (userId: number, member: TeamMember): void => {
-  const squadStr = localStorage.getItem(STORAGE_KEYS.SQUAD);
-  let allSquads: Record<number, TeamMember[]> = {};
-  
-  if (squadStr) {
+// Get user from local storage
+export function getLocalUser(): User | null {
+  const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
+  if (storedUser) {
     try {
-      allSquads = JSON.parse(squadStr);
+      return JSON.parse(storedUser);
     } catch (error) {
-      console.error("Failed to parse squad from localStorage", error);
+      console.error("Error parsing user from localStorage:", error);
+      localStorage.removeItem(STORAGE_KEYS.USER);
     }
   }
-  
-  const userSquad = allSquads[userId] || [];
-  userSquad.push(member);
-  allSquads[userId] = userSquad;
-  
-  localStorage.setItem(STORAGE_KEYS.SQUAD, JSON.stringify(allSquads));
-};
+  return null;
+}
 
-// Remove member from user's squad
-export const removeSquadMember = (userId: number, memberId: number): void => {
-  const squadStr = localStorage.getItem(STORAGE_KEYS.SQUAD);
-  if (!squadStr) return;
-  
-  try {
-    const allSquads = JSON.parse(squadStr) as Record<number, TeamMember[]>;
-    const userSquad = allSquads[userId] || [];
-    
-    allSquads[userId] = userSquad.filter(m => m.id !== memberId);
-    localStorage.setItem(STORAGE_KEYS.SQUAD, JSON.stringify(allSquads));
-  } catch (error) {
-    console.error("Failed to parse squad from localStorage", error);
+// Save user to local storage
+export function saveLocalUser(user: User): void {
+  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+}
+
+// Remove user from local storage
+export function removeLocalUser(): void {
+  localStorage.removeItem(STORAGE_KEYS.USER);
+}
+
+// Get currency symbol
+export function getCurrencySymbol(currencyCode: string): string {
+  const country = COUNTRIES.find(c => c.currency === currencyCode);
+  return country ? country.symbol : '$'; // Default to $ if not found
+}
+
+// Convert between currencies
+export function convertCurrency(
+  amount: number,
+  fromCurrency: Currency,
+  toCurrency: Currency
+): number {
+  if (fromCurrency === toCurrency) {
+    return amount;
   }
-};
+  
+  // Conversion logic
+  if (fromCurrency === "USD" && toCurrency === "INR") {
+    return amount * CURRENCY_CONVERSION.USD_TO_INR;
+  } else if (fromCurrency === "USD" && toCurrency === "NGN") {
+    return amount * CURRENCY_CONVERSION.USD_TO_NGN;
+  } else if (fromCurrency === "INR" && toCurrency === "USD") {
+    return amount * CURRENCY_CONVERSION.INR_TO_USD;
+  } else if (fromCurrency === "INR" && toCurrency === "NGN") {
+    return amount * CURRENCY_CONVERSION.INR_TO_NGN;
+  } else if (fromCurrency === "NGN" && toCurrency === "USD") {
+    return amount * CURRENCY_CONVERSION.NGN_TO_USD;
+  } else if (fromCurrency === "NGN" && toCurrency === "INR") {
+    return amount * CURRENCY_CONVERSION.NGN_TO_INR;
+  }
+  
+  return amount; // Fallback
+}
+
+// Format tournament prize breakdown
+export function formatPrizeBreakdown(tournament: Tournament): string {
+  const totalPrize = tournament.prizePool;
+  
+  if (tournament.mode === "Solo") {
+    return `1st: ${getCurrencySymbol(tournament.currency)}${Math.floor(totalPrize * 0.5)}, 2nd: ${getCurrencySymbol(tournament.currency)}${Math.floor(totalPrize * 0.3)}, 3rd: ${getCurrencySymbol(tournament.currency)}${Math.floor(totalPrize * 0.2)}`;
+  } else if (tournament.mode === "Duo") {
+    return `1st: ${getCurrencySymbol(tournament.currency)}${Math.floor(totalPrize * 0.5)}, 2nd: ${getCurrencySymbol(tournament.currency)}${Math.floor(totalPrize * 0.3)}, 3rd: ${getCurrencySymbol(tournament.currency)}${Math.floor(totalPrize * 0.2)}`;
+  } else {
+    // Squad
+    return `1st: ${getCurrencySymbol(tournament.currency)}${Math.floor(totalPrize * 0.4)}, 2nd: ${getCurrencySymbol(tournament.currency)}${Math.floor(totalPrize * 0.3)}, 3rd: ${getCurrencySymbol(tournament.currency)}${Math.floor(totalPrize * 0.2)}, 4th: ${getCurrencySymbol(tournament.currency)}${Math.floor(totalPrize * 0.1)}`;
+  }
+}
+
+// Get position suffix (1st, 2nd, 3rd, etc.)
+export function getPositionSuffix(position: number): string {
+  if (position === 1) return "st";
+  if (position === 2) return "nd";
+  if (position === 3) return "rd";
+  return "th";
+}
+
+// Format squad member for display
+export function formatSquadMember(member: SquadMember): string {
+  return `${member.username} (${member.gameId})`;
+}
+
+// Sort tournaments by date (newest first)
+export function sortTournamentsByDate(tournaments: Tournament[]): Tournament[] {
+  return [...tournaments].sort((a, b) => b.date.getTime() - a.date.getTime());
+}
+
+// Sort matches by date (newest first)
+export function sortMatchesByDate(matches: Match[]): Match[] {
+  return [...matches].sort((a, b) => b.date.getTime() - a.date.getTime());
+}
+
+// Filter upcoming tournaments
+export function getUpcomingTournaments(tournaments: Tournament[]): Tournament[] {
+  const now = new Date();
+  return tournaments.filter(t => t.date > now && t.status === 'upcoming');
+}
+
+// Filter ongoing tournaments
+export function getOngoingTournaments(tournaments: Tournament[]): Tournament[] {
+  return tournaments.filter(t => t.status === 'ongoing');
+}
+
+// Filter completed tournaments
+export function getCompletedTournaments(tournaments: Tournament[]): Tournament[] {
+  return tournaments.filter(t => t.status === 'completed');
+}
+
+// Get user matches
+export function getUserMatches(matches: Match[], userId: number): Match[] {
+  return matches.filter(m => m.teamMembers.includes(userId));
+}
+
+// Sort transactions by date (newest first)
+export function sortTransactionsByDate(transactions: WalletTransaction[]): WalletTransaction[] {
+  return [...transactions].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}
+
+// Get transaction type display text
+export function getTransactionTypeText(type: string): string {
+  switch (type) {
+    case TRANSACTION_TYPES.DEPOSIT:
+      return 'Deposit';
+    case TRANSACTION_TYPES.WITHDRAWAL:
+      return 'Withdrawal';
+    case TRANSACTION_TYPES.PRIZE:
+      return 'Tournament Prize';
+    case TRANSACTION_TYPES.ENTRY_FEE:
+      return 'Tournament Entry Fee';
+    case TRANSACTION_TYPES.REFUND:
+      return 'Refund';
+    default:
+      return type;
+  }
+}
+
+// Calculate earnings from transactions
+export function calculateEarnings(transactions: WalletTransaction[]): number {
+  return transactions.reduce((total, tx) => {
+    if (tx.type === TRANSACTION_TYPES.PRIZE) {
+      return total + tx.amount;
+    }
+    return total;
+  }, 0);
+}
+
+// Calculate expenses from transactions
+export function calculateExpenses(transactions: WalletTransaction[]): number {
+  return transactions.reduce((total, tx) => {
+    if (tx.type === TRANSACTION_TYPES.ENTRY_FEE) {
+      return total + Math.abs(tx.amount);
+    }
+    return total;
+  }, 0);
+}
+
+// Get KYC status display text
+export function getKYCStatusText(status: string): string {
+  switch (status) {
+    case KYC_STATUS.NOT_SUBMITTED:
+      return 'Not Submitted';
+    case KYC_STATUS.PENDING:
+      return 'Pending Verification';
+    case KYC_STATUS.VERIFIED:
+      return 'Verified';
+    case KYC_STATUS.REJECTED:
+      return 'Rejected';
+    default:
+      return status;
+  }
+}
+
+// Sort leaderboard entries by points (highest first)
+export function sortLeaderboardByPoints(entries: LeaderboardEntry[]): LeaderboardEntry[] {
+  return [...entries].sort((a, b) => b.totalPoints - a.totalPoints);
+}
+
+// Format tournament currency for display
+export function formatTournamentCurrency(tournament: Tournament): string {
+  return `${getCurrencySymbol(tournament.currency)}${tournament.entryFee}`;
+}
+
+// Get country code from country name
+export function getCountryCodeFromName(countryName: string): string {
+  const country = COUNTRIES.find(c => c.country.toLowerCase() === countryName.toLowerCase());
+  return country ? country.code : 'IN'; // Default to India if not found
+}
+
+// Get country name from country code
+export function getCountryNameFromCode(countryCode: string): string {
+  const country = COUNTRIES.find(c => c.code === countryCode);
+  return country ? country.country : 'India'; // Default to India if not found
+}
+
+// Get currency from country name
+export function getCurrencyFromCountry(countryName: string): string {
+  const country = COUNTRIES.find(c => c.country.toLowerCase() === countryName.toLowerCase());
+  return country ? country.currency : 'INR'; // Default to INR if not found
+}
+
+// Calculate total prize from tournament position
+export function calculatePrize(tournament: Tournament, position: number): number {
+  const totalPrize = tournament.prizePool;
+  
+  if (position === 1) {
+    return Math.floor(totalPrize * (tournament.mode === "Squad" ? 0.4 : 0.5));
+  } else if (position === 2) {
+    return Math.floor(totalPrize * 0.3);
+  } else if (position === 3) {
+    return Math.floor(totalPrize * 0.2);
+  } else if (position === 4 && tournament.mode === "Squad") {
+    return Math.floor(totalPrize * 0.1);
+  }
+  
+  return 0;
+}
+
+// Get the required KYC documents based on user's country
+export function getRequiredKycDocuments(country: string): Array<{ type: string, name: string, required: boolean }> {
+  switch(country) {
+    case 'India':
+      return [
+        { type: 'aadhaar', name: 'Aadhaar Card', required: true },
+        { type: 'pan', name: 'PAN Card', required: true },
+        { type: 'selfie', name: 'Selfie with ID', required: true }
+      ];
+    case 'Nigeria':
+      return [
+        { type: 'nin', name: 'National Identification Number (NIN)', required: true },
+        { type: 'bvn', name: 'Bank Verification Number (BVN)', required: true },
+        { type: 'selfie', name: 'Selfie with ID', required: true }
+      ];
+    default:
+      return [
+        { type: 'passport', name: 'Passport', required: true },
+        { type: 'nationalid', name: 'National ID', required: false },
+        { type: 'driverslicense', name: 'Driver\'s License', required: false },
+        { type: 'selfie', name: 'Selfie with ID', required: true }
+      ];
+  }
+}
