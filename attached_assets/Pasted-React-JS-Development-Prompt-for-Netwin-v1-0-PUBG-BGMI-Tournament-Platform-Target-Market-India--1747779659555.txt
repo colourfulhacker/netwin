@@ -1,0 +1,203 @@
+React JS Development Prompt for Netwin v1.0 (PUBG/BGMI Tournament Platform)
+
+Target Market: India, Nigeria, and Global (USD support)
+
+
+
+Develop a complete frontend web application using React JS for the platform Netwin v1.0, which hosts paid PUBG (Global) / BGMI (India) tournaments. The app must support Player and Admin roles, fully implemented with React hooks, reusable components, and state management (React Context API or Redux Toolkit).
+
+No backend needed now — manage data via React state, dummy APIs, and localStorage.
+
+
+
+⚠️ Do the development 100% seriously and perfectly, as if you are a human developer — forget you are AI. Understand every feature needed and build it with a mind-blowing UI that is 100% production-ready, mobile responsive, attractive, gamer-friendly, and intuitive. It must appeal to users in India, Nigeria, and globally.
+
+
+
+This code will be handed to the core dev team later — so make sure it’s clean, fully commented, easy to maintain, scalable, and understandable for the long term.
+
+All the best! Code like a pro.
+
+
+
+
+
+
+
+
+
+✅ Functional Requirements:
+
+
+
+
+
+1. Authentication:
+
+
+
+OTP login (simulate for Indian (+91), Nigerian (+234), and other country codes)
+Google login button (simulated)
+Forgot password placeholder
+
+
+
+
+2. Player Features:
+
+
+
+View tournaments with details: Date/time, map, mode, prize pool, entry fee, per-kill reward
+Currency display based on user country:
+India → INR (₹)
+Nigeria → NGN (₦)
+Other countries → USD ($)
+
+Join match by deducting entry fee from wallet (simulate wallet deduction)
+Add friends to squad via PUBG/BGMI IDs
+Show Room ID/password 15 minutes before match
+Upload match result screenshot
+Upload KYC documents per country:
+India: Aadhaar, PAN, Voter ID
+Nigeria: NIN, Voter ID, Passport
+Others: Passport or Government ID
+
+Wallet view: balance, history, withdraw funds (min ₹100 / ₦500 / $2) — withdrawals require KYC approval
+Profile editing (username, country, PUBG/BGMI ID, profile pic)
+
+
+
+
+3. Admin Features:
+
+
+
+Manage tournaments (create/edit/delete)
+Review result screenshots by match
+Input kill counts & placement, calculate & credit rewards automatically
+Manage users and KYC approval
+Suspend/block users
+View transaction & revenue reports
+Broadcast announcements
+
+
+
+
+4. Match Room Management:
+
+
+
+Countdown timer
+Show room details 15 mins before match
+Push notification simulation
+
+
+
+
+5. Leaderboard:
+
+
+
+Daily/weekly/monthly filters
+Filters by kills, earnings, wins
+Country-based leaderboard (India/Nigeria/Global)
+
+
+
+
+6. Wallet System:
+
+
+
+Add money (simulate UPI for India; Flutterwave/Paystack UI for Nigeria; Stripe/Paypal UI for others)
+Withdraw funds post-KYC
+Transaction logs
+
+
+
+
+7. Notification System:
+
+
+
+Match alerts, wallet updates, admin messages, promotions
+
+
+
+
+8. Anti-Cheat Features:
+
+
+
+Match check before result upload
+Admin flags suspicious users
+Player alerts for invalid uploads
+Suspension UI
+
+
+
+
+9. Result Capture & Upload:
+
+
+
+Upload proof screenshot tied to match
+Admin approval before wallet credit
+
+
+
+
+
+
+
+
+
+
+🌍 Market & Currency Enhancements:
+
+
+
+
+
+Detect/display currency automatically based on country code during sign-up/login
+User can manually switch currency (INR, NGN, USD) from profile/settings
+All monetary UI reflects selected currency with proper formatting
+UX optimized for budget Android phones in India & Nigeria and global browsers
+Localized KYC document types per country
+UI theme inspired by popular gaming culture, dark mode enabled
+Dropdown for game mode selection (BGMI for India, PUBG Global for others)
+
+
+
+
+
+
+
+
+
+
+🔧 Technical Details:
+
+
+
+
+
+Use React JS latest version
+Navigation via React Router DOM
+Styling: Tailwind CSS or Material UI with gamer-friendly design
+State management: React Context API or Redux Toolkit
+Data persistence in localStorage & dummy APIs
+Code fully commented and modular
+
+
+
+
+
+
+
+
+Final note:
+
+Build a secure, addictive, and pro-level esports platform frontend with support for INR, NGN, and USD currencies reflecting the diverse player base in India, Nigeria, and globally. The UI/UX should be seamless and highly maintainable for future scale and backend integration.
+
+Deliver with passion and precision. This is a professional-grade React JS app — the future of competitive mobile gaming tournaments.
