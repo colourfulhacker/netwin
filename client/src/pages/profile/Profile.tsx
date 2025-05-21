@@ -278,7 +278,7 @@ export default function Profile() {
                 className="w-full justify-start gap-3 hover:bg-primary/10"
                 onClick={() => setSelectedTab("gaming")}
               >
-                <GameController className="h-5 w-5 text-gray-400" />
+                <Gamepad2 className="h-5 w-5 text-gray-400" />
                 <span>Gaming Profile</span>
               </Button>
               
