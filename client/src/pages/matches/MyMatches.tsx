@@ -10,12 +10,10 @@ import MatchResults from "@/components/match/MatchResults";
 
 export default function MyMatches() {
   const { user } = useAuth();
-  const { getUserMatches, uploadResult } = useMatches();
+  const { matches, uploadMatchResult } = useMatches();
   const [selectedTab, setSelectedTab] = useState<"upcoming" | "completed">("upcoming");
   
   if (!user) return null;
-  
-  const matches = getUserMatches(user.id);
   
   // Filter matches by status
   const upcomingMatches = matches.filter(
@@ -28,7 +26,7 @@ export default function MyMatches() {
   // Handle result upload
   const handleUploadResult = async (matchId: number, screenshot: string) => {
     try {
-      return await uploadResult(matchId, screenshot);
+      return await uploadMatchResult(matchId, screenshot);
     } catch (error) {
       console.error("Error uploading result:", error);
       return false;

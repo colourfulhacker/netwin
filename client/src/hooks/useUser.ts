@@ -83,6 +83,28 @@ export function useUser() {
     return getRequiredKycDocuments(user.country);
   };
   
+  // Update game ID
+  const updateGameId = (gameId: string) => {
+    if (user) {
+      return updateUser({ gameId });
+    }
+    return false;
+  };
+  
+  // Upload profile image
+  const uploadProfileImage = async (imageData: string) => {
+    if (!user) return false;
+    
+    try {
+      // Update user profile with new image
+      await updateUser({ profilePicture: imageData });
+      return true;
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      return false;
+    }
+  };
+  
   return {
     profile: user,
     kycDocuments,
@@ -90,6 +112,8 @@ export function useUser() {
     updateProfile,
     submitKycDocument,
     getKycStatus,
-    getRequiredDocuments
+    getRequiredDocuments,
+    updateGameId,
+    uploadProfileImage
   };
 }
