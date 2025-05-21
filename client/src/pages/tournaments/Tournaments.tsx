@@ -205,7 +205,7 @@ export default function Tournaments() {
                         {tournament.title}
                       </h3>
                       <Badge variant="outline" className="border-primary text-primary">
-                        {tournament.gameMode}
+                        {tournament.mode}
                       </Badge>
                     </div>
                     
@@ -230,7 +230,7 @@ export default function Tournaments() {
                       </div>
                       <div className="flex items-center text-sm text-gray-400">
                         <Trophy className="mr-2 h-4 w-4" />
-                        {tournament.maxPlayers} slots
+                        {tournament.registeredPlayers}/{tournament.maxPlayers} slots
                       </div>
                     </div>
                     
@@ -238,14 +238,14 @@ export default function Tournaments() {
                       <div>
                         <div className="text-xs text-gray-400">Entry Fee</div>
                         <div className="font-medium">
-                          {formatCurrency(tournament.entryFee, user.currency)}
+                          {formatCurrency(tournament.entryFee, "INR")}
                         </div>
                       </div>
                       
                       <div>
                         <div className="text-xs text-gray-400">Prize Pool</div>
                         <div className="font-medium text-green-400">
-                          {formatCurrency(tournament.prizePool, user.currency)}
+                          {formatCurrency(tournament.prizePool, "INR")}
                         </div>
                       </div>
                     </div>
