@@ -18,10 +18,16 @@ export const CURRENCY_CONVERSION = {
 };
 
 // Game modes
-export const GAME_MODES = {
+export const GAME_MODES_OBJECT = {
   PUBG: 'PUBG',
   BGMI: 'BGMI'
 };
+
+// Game modes as array for mapping
+export const GAME_MODES = [
+  { value: 'PUBG', label: 'PUBG' },
+  { value: 'BGMI', label: 'BGMI' }
+];
 
 // Tournament modes
 export const TOURNAMENT_MODES = [
