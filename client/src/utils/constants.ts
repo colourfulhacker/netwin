@@ -134,7 +134,8 @@ export const COUNTRIES = [
 ];
 
 // Country codes extracted for easier access
-export const COUNTRY_CODES = COUNTRIES.reduce((acc, country) => {
-  acc[country.country] = country.code;
-  return acc;
-}, {} as Record<string, string>);
+export const COUNTRY_CODES = COUNTRIES.map(country => ({
+  code: country.countryCode,
+  country: country.country,
+  flag: country.flag
+}));
