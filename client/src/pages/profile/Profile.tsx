@@ -34,7 +34,7 @@ import {
   UploadCloud,
   User,
   ShieldCheck,
-  GameController,
+  Gamepad2,
   AlertTriangle,
   CheckCircle2,
   ChevronRight,
@@ -474,7 +474,7 @@ export default function Profile() {
                     </div>
                     
                     <Alert className="bg-dark-lighter border-gray-700 text-gray-300">
-                      <GameController className="h-4 w-4" />
+                      <Gamepad2 className="h-4 w-4" />
                       <AlertTitle>Game Preference</AlertTitle>
                       <AlertDescription>
                         Your preferred game is {user.gameMode}. This affects the tournaments and matches displayed to you.
