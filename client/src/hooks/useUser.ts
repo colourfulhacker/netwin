@@ -41,7 +41,7 @@ export function useUser() {
       id: Date.now(),
       userId: user.id,
       status: "pending",
-      createdAt: new Date().toISOString()
+      createdAt: new Date()
     };
     
     // Store in localStorage

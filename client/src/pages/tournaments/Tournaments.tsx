@@ -25,7 +25,7 @@ import {
   Target,
   ArrowRight,
 } from "lucide-react";
-import { GAME_MAPS, GAME_MODES } from "@/utils/constants";
+import { TOURNAMENT_MAPS, GAME_MODES } from "@/utils/constants";
 
 export default function Tournaments() {
   const { user } = useAuth();
@@ -122,7 +122,7 @@ export default function Tournaments() {
                 <SelectValue placeholder="Game mode" />
               </SelectTrigger>
               <SelectContent className="bg-dark-card border-gray-700">
-                <SelectItem value="">All modes</SelectItem>
+                <SelectItem value="all">All modes</SelectItem>
                 {GAME_MODES.map(mode => (
                   <SelectItem key={mode.value} value={mode.value}>
                     {mode.label}
@@ -139,10 +139,10 @@ export default function Tournaments() {
                 <SelectValue placeholder="Map" />
               </SelectTrigger>
               <SelectContent className="bg-dark-card border-gray-700">
-                <SelectItem value="">All maps</SelectItem>
-                {GAME_MAPS.map(map => (
-                  <SelectItem key={map} value={map}>
-                    {map}
+                <SelectItem value="all">All maps</SelectItem>
+                {TOURNAMENT_MAPS.map(map => (
+                  <SelectItem key={map.value} value={map.value}>
+                    {map.label}
                   </SelectItem>
                 ))}
               </SelectContent>
