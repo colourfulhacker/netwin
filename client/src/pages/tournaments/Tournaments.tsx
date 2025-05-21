@@ -66,12 +66,12 @@ export default function Tournaments() {
     }
     
     // Filter by game mode
-    if (selectedMode) {
+    if (selectedMode && selectedMode !== "all") {
       filtered = filtered.filter(t => t.mode === selectedMode);
     }
     
     // Filter by map
-    if (selectedMap) {
+    if (selectedMap && selectedMap !== "all") {
       filtered = filtered.filter(t => t.map === selectedMap);
     }
     
